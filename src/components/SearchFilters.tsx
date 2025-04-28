@@ -3,7 +3,6 @@
 import {
   Text,
   Box,
-  Group,
   TextInput,
   Select,
   RangeSlider,
@@ -21,10 +20,27 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { debounce } from "lodash";
+import { JobPost } from '@/app/page';
 
 type SearchFiltersProps = {
-  setJobPosts: React.Dispatch<React.SetStateAction<any[]>>;
+  setJobPosts: React.Dispatch<React.SetStateAction<JobPost[]>>;
 };
+
+export type SearchFiltersType = {
+  jobTitle?: string;
+  location?: string;
+  jobType?: string;
+  salaryRange?: string; 
+};
+
+export const fetchJobPosts = async (filters: SearchFiltersType) => {
+  const response = await axios.get('http://localhost:3000/job-posts', {
+    params: filters,
+  });
+
+  return response.data;
+};
+
 
 export function SearchFilters({ setJobPosts }: SearchFiltersProps) {
   const [range, setRange] = useState<[number, number]>([10, 100]);
@@ -36,16 +52,10 @@ export function SearchFilters({ setJobPosts }: SearchFiltersProps) {
   });
 
 
-  const fetchJobPosts = async (filters: any) => {
-    const response = await axios.get('http://localhost:3000/job-posts', {
-      params: filters,
-    });
 
-    return response.data;
-  };
 
   const fetchJobs = useCallback(
-    debounce(async (filters: any) => {
+    debounce(async (filters: SearchFiltersType) => {
       const jobs = await fetchJobPosts(filters);
       setJobPosts(jobs);
     }, 500),
@@ -56,7 +66,7 @@ export function SearchFilters({ setJobPosts }: SearchFiltersProps) {
     fetchJobs(filters);
   }, [filters]);
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | null) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
@@ -109,7 +119,7 @@ export function SearchFilters({ setJobPosts }: SearchFiltersProps) {
                 fontWeight: 500,
               }
             }}
-            onChange={(value: any) => handleInputChange('location', value)}
+            onChange={(value: string | null) => handleInputChange('location', value??"")}
           />
         </Flex>
         <Divider orientation="vertical" color="#E0E0E0" style={{ height: rem(48) }} visibleFrom='md' />
@@ -130,7 +140,7 @@ export function SearchFilters({ setJobPosts }: SearchFiltersProps) {
                 fontWeight: 500,
               }
             }}
-            onChange={(value: any) => handleInputChange('jobType', value)}
+            onChange={(value: string | null) => handleInputChange('jobType', value??"")}
           />
 
           <Divider orientation="vertical" color="#E0E0E0" style={{ height: rem(48) }} visibleFrom='md' />
@@ -154,7 +164,7 @@ export function SearchFilters({ setJobPosts }: SearchFiltersProps) {
               onChange={handleRangeChange}
               label={null}
               minRange={5}
-              styles={(theme) => ({
+              styles={() => ({
                 track: {
                   backgroundColor: '#CCC2C2',
                   height: '4px',

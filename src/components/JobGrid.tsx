@@ -3,9 +3,10 @@
 import { Box, SimpleGrid, Paper, Text, Button, Image, rem, Flex } from '@mantine/core';
 import { IconStack2 } from '@tabler/icons-react';
 import { BiUserPlus } from "react-icons/bi";
+import { JobPost } from '@/app/page';
 
 type JobGridProps = {
-  jobPosts: any[];
+  jobPosts: JobPost[];
 };
 
 export function JobGrid({ jobPosts }: JobGridProps) {

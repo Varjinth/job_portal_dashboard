@@ -1,9 +1,9 @@
-// src/components/Navbar.tsx
 'use client';
 
 import { Box, Text, Container, rem, Image, Center, Flex } from '@mantine/core';
 import { IconChevronDown, IconChevronsDown, IconChevronsRight } from '@tabler/icons-react';
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
+import { useClickOutside } from '@mantine/hooks';
 import {
   Modal,
   Button,
@@ -19,31 +19,81 @@ import { useDisclosure } from "@mantine/hooks";
 import { IoCalendarClearOutline } from "react-icons/io5";
 import axios from 'axios';
 
-export function TopNavbar() {
+
+
+type JobPostFormData = {
+  jobTitle: string;
+  companyName: string;
+  location: string;
+  jobType: string;
+  salaryFrom: number;
+  salaryTo: number;
+  deadline: string;
+  description: string;
+  requirements?: string;
+  experience: string;
+};
+import { JobPost } from '@/app/page';
+
+type SearchFiltersProps = {
+  setJobPosts: React.Dispatch<React.SetStateAction<JobPost[]>>;
+};
+
+export function TopNavbar({ setJobPosts }: SearchFiltersProps) {
 
   const [opened, { open, close }] = useDisclosure(false);
+  const ref = useClickOutside(() => reset());
+  
   const {
     register,
     handleSubmit,
+    control,  
     setValue,
-    watch,
+    setError,
+    reset,  
     formState: { errors },
-  } = useForm();
+  } = useForm<JobPostFormData>();
 
-  const onSubmit = async (data: any) => {
-    try {
-      const response = await axios.post('http://localhost:3000/job-posts', data);
-      console.log('Job Post Created:', response.data);
-      close();
-    } catch (error: any) {
-      if (error.response) {
-        console.error('Server Error:', error.response.data);
-      } else if (error.request) {
-        console.error('No Response:', error.request);
-      } else {
-        console.error('Error:', error.message);
+  const onSubmit = async (data: JobPostFormData) => {
+
+    if (data.salaryFrom !== undefined && data.salaryTo !== undefined) {
+      if (data.salaryFrom > data.salaryTo) {
+        setError('salaryFrom', {
+          type: 'manual',
+          message: 'Salary From must be less than Salary To',
+        });
+
+        setError('salaryTo', {
+          type: 'manual',
+          message: 'Salary To must be greater than Salary From',
+        });
+
+        return;
       }
     }
+    try {
+      const response = await axios.post('http://localhost:3000/job-posts', data);
+      const getPost = await axios.get('http://localhost:3000/job-posts');
+      setJobPosts(getPost.data);
+      console.log('Job Post Created:', response.data);
+      reset(); 
+      close();
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          console.error('Server Error:', error.response.data);
+        } else if (error.request) {
+          console.error('No Response:', error.request);
+        } else {
+          console.error('Error:', error.message);
+        }
+      } else if (error instanceof Error) {
+        console.error('Unexpected Error:', error.message);
+      } else {
+        console.error('Unknown Error', error);
+      }
+    }
+
   };
 
   return (
@@ -160,7 +210,7 @@ export function TopNavbar() {
         }}
       >
         <Center style={{ size: "24px", fontWeight: "700", color: "#222222" }} mb={20}>Create Job Opening</Center>
-        <form onSubmit={handleSubmit(onSubmit)}   >
+        <form onSubmit={handleSubmit(onSubmit)}  ref={ref} >
           <Flex direction={{ base: 'column', sm: 'row' }} mb="md" gap="12px" >
             <TextInput
               label="Job Title"
@@ -192,7 +242,7 @@ export function TopNavbar() {
               data={["Chennai", "Bangalore", "Hyderabad", "Remote"]}
               {...register("location", { required: true })}
               error={errors.location && "Location is required"}
-              onChange={(value) => setValue("location", value)}
+              onChange={(value: string | null) => setValue("location", value ?? "")}
               classNames={{
                 input: 'custom-input',
                 label: 'custom-label'
@@ -210,8 +260,9 @@ export function TopNavbar() {
                 "Internship",
               ]}
               placeholder='FullTime'
-              {...register("jobType")}
-              onChange={(value) => setValue("jobType", value)}
+              {...register("jobType", { required: true })}
+              error={errors.jobType && "Jobtype is required"}
+              onChange={(value: string | null) => setValue("jobType", value ?? "")}
               classNames={{
                 input: 'custom-input',
                 label: 'custom-label'
@@ -223,47 +274,65 @@ export function TopNavbar() {
           </Flex>
           <Flex direction={{ base: 'column', sm: 'row' }} mb="md" gap="12px" >
             <Flex direction={{ base: 'column', sm: 'row' }} gap={{ base: '0px', sm: '10px' }} style={{ flex: 1 }}>
-              <NumberInput
-                label="Salary Range"
-                prefix="₹"
-                onChange={(value) => {
-                  const numericValue = typeof value === 'string'
-                    ? parseFloat(value.replace(/[^\d.]/g, ''))
-                    : value;
-                  setValue("salaryFrom", numericValue);
+              <Controller
+                name="salaryFrom"
+                control={control}
+                rules={{
+                  required: 'Salary From is required',
                 }}
-                hideControls
-                classNames={{
-                  input: 'custom-num-input',
-                  label: 'custom-label'
-                }}
-                placeholder='⇵ ₹0'
-                style={{ flex: 1 }}
+                render={({ field }) => (
+                  <NumberInput
+                    label="Salary From"
+                    prefix="₹"
+                    {...field}
+                    hideControls
+                    classNames={{
+                      input: 'custom-num-input',
+                      label: 'custom-label'
+                    }}
+                    placeholder='⇵ ₹0'
+                    style={{ flex: 1 }}
+                    error={errors.salaryFrom?.message}
+                  />
+                )}
               />
-              <NumberInput
-                label="Salary To"
-                labelProps={{ style: { visibility: 'hidden' } }}
-                prefix="₹"
-                onChange={(value) => {
-                  const numericValue = typeof value === 'string'
-                    ? parseFloat(value.replace(/[^\d.]/g, ''))
-                    : value;
-                  console.log(numericValue)
-                  setValue("salaryTo", numericValue);
+
+              <Controller
+                name="salaryTo"
+                control={control}
+                rules={{
+                  required: 'Salary To is required',
                 }}
-                hideControls
-                classNames={{
-                  input: 'custom-num-input',
-                  label: 'custom-num-label'
-                }}
-                placeholder='⇵ ₹12,00,000'
-                style={{ flex: 1 }}
+                render={({ field }) => (
+                  <NumberInput
+                    label="Salary To"
+                    labelProps={{ style: { visibility: 'hidden' } }}
+                    prefix="₹"
+                    {...field}
+                    hideControls
+                    classNames={{
+                      input: 'custom-num-input',
+                      label: 'custom-num-label'
+                    }}
+                    placeholder='⇵ ₹12,00,000'
+                    style={{ flex: 1 }}
+                    error={errors.salaryTo?.message}
+                  />
+                )}
               />
             </Flex>
             <DatePickerInput
               label="Application Deadline"
-              {...register("deadline")}
-              onChange={(value) => setValue("deadline", value)}
+              {...register("deadline", { required: true })}
+              error={errors.deadline && "Deadline is required"}
+              onChange={(value: Date | null) => {
+                if (value) {
+                  const formattedDate = value.toISOString().split('T')[0];
+                  setValue("deadline", formattedDate);
+                } else {
+                  setValue("deadline", "");
+                }
+              }}
               rightSection={<IoCalendarClearOutline size={16} color='#BCBCBC' />}
               rightSectionWidth={70}
               classNames={{
@@ -271,6 +340,7 @@ export function TopNavbar() {
                 label: 'custom-label'
               }}
               style={{ flex: 1 }}
+              minDate={new Date()}
             />
           </Flex>
           <Textarea
@@ -294,7 +364,7 @@ export function TopNavbar() {
               data={['1-3 yrs Exp', '3-5 yrs Exp', '5-7 yrs Exp', '7-10 yrs Exp']}
               {...register("experience", { required: true })}
               error={errors.location && "Exp. level is required"}
-              onChange={(value) => setValue("experience", value)}
+              onChange={(value: string | null) => setValue("experience", value ?? "")}
               classNames={{
                 input: 'custom-input',
                 label: 'custom-label'
@@ -306,7 +376,7 @@ export function TopNavbar() {
             <TextInput
               label="Requirements"
               placeholder="Python, Javascript"
-              {...register("requirements", { required: true })}
+              {...register("requirements")}
               classNames={{
                 input: 'custom-input',
                 label: 'custom-label'

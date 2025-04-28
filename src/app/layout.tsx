@@ -45,7 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${satoshi.variable}`}>
       <body>
-        <MantineProvider withGlobalStyles withNormalizeCSS>
+        <MantineProvider>
           {children}
         </MantineProvider>
       </body>

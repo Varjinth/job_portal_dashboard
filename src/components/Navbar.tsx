@@ -3,7 +3,6 @@
 import { Box, Text, Container, rem, Image, Center, Flex } from '@mantine/core';
 import { IconChevronDown, IconChevronsDown, IconChevronsRight } from '@tabler/icons-react';
 import { useForm, Controller } from "react-hook-form";
-import { useClickOutside } from '@mantine/hooks';
 import {
   Modal,
   Button,
@@ -42,7 +41,6 @@ type SearchFiltersProps = {
 export function TopNavbar({ setJobPosts }: SearchFiltersProps) {
 
   const [opened, { open, close }] = useDisclosure(false);
-  const ref = useClickOutside(() => reset());
   
   const {
     register,
@@ -72,8 +70,8 @@ export function TopNavbar({ setJobPosts }: SearchFiltersProps) {
       }
     }
     try {
-      const response = await axios.post('http://localhost:3000/job-posts', data);
-      const getPost = await axios.get('http://localhost:3000/job-posts');
+      const response = await axios.post('https://job-portal-backend-32e9.onrender.com/job-posts', data);
+      const getPost = await axios.get('https://job-portal-backend-32e9.onrender.com/job-posts');
       setJobPosts(getPost.data);
       console.log('Job Post Created:', response.data);
       reset(); 
@@ -210,7 +208,7 @@ export function TopNavbar({ setJobPosts }: SearchFiltersProps) {
         }}
       >
         <Center style={{ size: "24px", fontWeight: "700", color: "#222222" }} mb={20}>Create Job Opening</Center>
-        <form onSubmit={handleSubmit(onSubmit)}  ref={ref} >
+        <form onSubmit={handleSubmit(onSubmit)} >
           <Flex direction={{ base: 'column', sm: 'row' }} mb="md" gap="12px" >
             <TextInput
               label="Job Title"

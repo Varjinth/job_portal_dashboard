@@ -34,7 +34,7 @@ export type SearchFiltersType = {
 };
 
 export const fetchJobPosts = async (filters: SearchFiltersType) => {
-  const response = await axios.get('http://localhost:3000/job-posts', {
+  const response = await axios.get('https://job-portal-backend-32e9.onrender.com/job-posts', {
     params: filters,
   });
 

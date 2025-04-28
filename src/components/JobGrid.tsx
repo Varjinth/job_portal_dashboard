@@ -14,7 +14,7 @@ export function JobGrid({ jobPosts }: JobGridProps) {
   return (
     <Box
       p={{ base: 20, sm: 60 }}
-      style={{ backgroundColor: '#FBFBFF' }}
+      style={{ backgroundColor: '#FBFBFF', minHeight:'60vh' }}
     >
       <SimpleGrid spacing="lg"
         cols={{ base: 1, sm: 2, lg: 3, xs: 1, md: 3, xl: 4 }}>

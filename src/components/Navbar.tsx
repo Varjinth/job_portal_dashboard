@@ -280,7 +280,7 @@ export function TopNavbar({ setJobPosts }: SearchFiltersProps) {
                 }}
                 render={({ field }) => (
                   <NumberInput
-                    label="Salary From"
+                    label="Salary Range"
                     prefix="₹"
                     {...field}
                     hideControls
